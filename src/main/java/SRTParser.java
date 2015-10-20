@@ -10,10 +10,21 @@ public class SRTParser {
     private final static int PARSE_TIME = 1;
     private final static int PARSE_DIALOGUE = 2;
 
-    public static List<Dialogue> parse(File f) throws FileNotFoundException, IOException{
-        InputStreamReader r = new InputStreamReader(new FileInputStream(f),"UTF-8");
+    public static List<Dialogue> parse(File f) throws FileNotFoundException{
+        InputStreamReader r = null;
+		try {
+			r = new InputStreamReader(new FileInputStream(f),"UTF-8");
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return null;
+		}
         BufferedReader reader = new BufferedReader(r);
-        BOMSkipper.skip(reader);
+        try {
+			BOMSkipper.skip(reader);
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
         String line;
         int state = PARSE_LINE_NUMBER;
         List<Dialogue> list  = new ArrayList<Dialogue>();
@@ -21,6 +32,7 @@ public class SRTParser {
         long startTime = 0;
         long endTime = 0;
         String dialogueText = "";
+        try {
         while((line = reader.readLine()) != null){
             if(state == PARSE_LINE_NUMBER){
                 lineNumber = Integer.parseInt(line);
@@ -39,6 +51,9 @@ public class SRTParser {
                     dialogueText += (line + " ");
                 }
             }
+        }
+        } catch(IOException e){
+        	return null;
         }
 
         return list;
