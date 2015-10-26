@@ -1,10 +1,13 @@
 import java.awt.Color;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.imageio.ImageIO;
 
@@ -12,30 +15,61 @@ import javax.imageio.ImageIO;
  * Created by manoharprabhu on 10/15/2015.
  */
 public class Main {
-	public static final int ARG_SUBTITLE_FILE = 0;
-	public static final int ARG_MOVIE_FILE = 1;
-	public static final int ARG_OUTPUT_FOLDER = 2;
-	
+
 	public static void main(String[] args) throws IOException,
 			InterruptedException {
 
 		String validate = null;
-		if ((validate = validateInput(args)) != null) {
+		Map<String, String> commandMap = buildCommand(args);
+		if (commandMap == null) {
+			System.exit(1);
+		}
+		if ((validate = validateInput(commandMap)) != null) {
 			System.out.println(validate);
 			System.exit(1);
 		}
-		List<Dialogue> list = SRTParser.parse(new File(args[0]));
+		List<Dialogue> list = SRTParser.parse(new File(commandMap.get("-s")));
 		if (list == null) {
 			System.out.println("Error while parsing subtitle file");
 			System.exit(1);
 		}
+
+		List<String> command = initializeCommand(commandMap);
+
+		for (Dialogue dialogue : list) {
+			prepareCommandForFrame(command, dialogue, commandMap);
+			File outputPicture = getOutputPictureForFrame(commandMap, dialogue);
+			SystemCommandExecutor commandExecutor = new SystemCommandExecutor(
+					command);
+			commandExecutor.executeCommand();
+			addCaptionToPicture(outputPicture, dialogue);
+			System.out.print("\rProcessed frame "
+					+ dialogue.getDialogueNumber() + " of " + list.size());
+		}
+	}
+
+	private static void addCaptionToPicture(File outputPicture,
+			Dialogue dialogue) throws IOException {
+		BufferedImage image = ImageIO.read(outputPicture);
+		Graphics g = image.getGraphics();
+		g.setFont(g.getFont().deriveFont(16f));
+		g.setColor(new Color(0, 0, 0, 190));
+		g.fillRect(0, 440, 640, 40);
+		g.setColor(Color.white);
+		g.setFont(Font.getFont(Font.MONOSPACED));
+		g.drawString(dialogue.getDialogueText(), 10, image.getHeight() - 15);
+		g.dispose();
+		ImageIO.write(image, "jpg", outputPicture);
+	}
+
+	private static List<String> initializeCommand(Map<String, String> commandMap) {
 		List<String> command = new ArrayList<String>();
 		String quality = "2";
 		command.add("ffmpeg");
 		command.add("-ss");
 		command.add("TIME_arg[2]");
 		command.add("-i");
-		command.add(args[ARG_MOVIE_FILE]);
+		command.add(commandMap.get("-m"));
 		command.add("-vframes");
 		command.add("1");
 		command.add("-s");
@@ -43,64 +77,85 @@ public class Main {
 		command.add("-q:v");
 		command.add(quality);
 		command.add("OUTPUT_FOLDER_arg[11]");
-
-		for (int i = 0; i < list.size(); i++) {
-			double time = (list.get(i).getEndTime() + list.get(i)
-					.getStartTime()) / 2000;
-			command.set(2, String.valueOf(time));
-			command.set(11, args[ARG_OUTPUT_FOLDER] + "\\" + i + ".jpg");
-			SystemCommandExecutor commandExecutor = new SystemCommandExecutor(
-					command);
-			commandExecutor.executeCommand();
-			BufferedImage image = ImageIO.read(new File(args[ARG_OUTPUT_FOLDER] + "\\" + i
-					+ ".jpg"));
-			Graphics g = image.getGraphics();
-			g.setFont(g.getFont().deriveFont(16f));
-			g.setColor(new Color(0, 0, 0, 128));
-			g.fillRect(0, 440, 640, 40);
-			g.setColor(Color.white);
-			g.drawString(list.get(i).getDialogueText(), 10,
-					image.getHeight() - 15);
-			g.dispose();
-			ImageIO.write(image, "jpg", new File(args[ARG_OUTPUT_FOLDER] + "\\" + i + ".jpg"));
-			System.out.print("\rProcessed frame " + i + " of " + list.size());
-		}
-
+		return command;
 	}
 
-	public static String validateInput(String[] args) {
-		// args[0] subtitle file
-		// args[1] movie file
-		// args[2] output folder
-		if (args.length != 3) {
-			return "Usage: java -jar comic-relief.jar <subtitle_file> <movile_file> <output_folder>";
-		}
+	private static File getOutputPictureForFrame(
+			Map<String, String> commandMap, Dialogue dialogue) {
+		return new File(getPathToPicture(commandMap, dialogue));
+	}
+
+	private static void prepareCommandForFrame(List<String> command,
+			Dialogue dialogue, Map<String, String> commandMap) {
+		double time = dialogue.getMedianTimeSeconds();
+		command.set(2, String.valueOf(time));
+		command.set(11, getPathToPicture(commandMap, dialogue));
+	}
+
+	private static String getPathToPicture(Map<String, String> commandMap,
+			Dialogue dialogue) {
+		return commandMap.get("-o") + "\\" + dialogue.getDialogueNumber()
+				+ ".jpg";
+	}
+
+	private static String validateInput(Map<String, String> map) {
 		try {
 			List<String> command = new ArrayList<String>();
 			command.add("ffmpeg");
 			SystemCommandExecutor cmd = new SystemCommandExecutor(command);
-			try {
-				if (cmd.executeCommand() != 1) {
-					return "ffmpeg command needs to be in PATH";
-				}
-			} catch (Exception e) {
+			if (cmd.executeCommand() != 1) {
 				return "ffmpeg command needs to be in PATH";
 			}
-			File f = new File(args[0]);
+			if (!map.containsKey("-s")) {
+				return "Subtitle file not specified";
+			}
+			if (!map.containsKey("-m")) {
+				return "Movie file not specified";
+			}
+			if (!map.containsKey("-o")) {
+				return "Output folder not specified";
+			}
+			File f = new File(map.get("-s"));
 			if (!f.exists() || !f.isFile()) {
 				return "Subtitle file not found";
 			}
-			f = new File(args[1]);
+			f = new File(map.get("-m"));
 			if (!f.exists() || !f.isFile()) {
 				return "Movie file not found";
 			}
-			f = new File(args[2]);
+			f = new File(map.get("-o"));
 			if (!f.exists() || !f.isDirectory()) {
 				return "Output folder doesn't exist or it is not a folder";
 			}
-		} catch (ArithmeticException e) {
-			return "Error in input files";
+		} catch (IOException e) {
+			return "Error while checking the supplied files";
+		} catch (InterruptedException e) {
+			return "Error while checking the supplied files";
 		}
 		return null;
+	}
+
+	private static Map<String, String> buildCommand(String[] args) {
+		if (args.length % 2 == 1) {
+			System.out
+					.println("Usage: java -jar comic-relief.jar -s <subtitle_file> -m <movile_file> -o <output_folder>");
+			return null;
+		}
+		Map<String, String> map = new HashMap<String, String>();
+		for (int i = 0; i < args.length; i = i + 2) {
+			if (args[i].equals("-s")) {
+				map.put("-s", args[i + 1]);
+			} else if (args[i].equals("-m")) {
+				map.put("-m", args[i + 1]);
+			} else if (args[i].equals("-o")) {
+				map.put("-o", args[i + 1]);
+			} else {
+				System.out.println("Invalid input option " + args[i]);
+				return null;
+			}
+		}
+
+		return map;
+
 	}
 }

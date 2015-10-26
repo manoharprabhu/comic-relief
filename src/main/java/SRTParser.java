@@ -10,11 +10,14 @@ public class SRTParser {
     private final static int PARSE_TIME = 1;
     private final static int PARSE_DIALOGUE = 2;
 
-    public static List<Dialogue> parse(File f) throws FileNotFoundException{
+    public static List<Dialogue> parse(File f){
         InputStreamReader r = null;
 		try {
 			r = new InputStreamReader(new FileInputStream(f),"UTF-8");
 		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+			return null;
+		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
 		}
@@ -27,6 +30,7 @@ public class SRTParser {
 		}
         String line;
         int state = PARSE_LINE_NUMBER;
+        System.out.println("Started parsing subtitle file");
         List<Dialogue> list  = new ArrayList<Dialogue>();
         int lineNumber = 0;
         long startTime = 0;
@@ -52,10 +56,10 @@ public class SRTParser {
                 }
             }
         }
-        } catch(IOException e){
+        } catch(Exception e){
         	return null;
         }
-
+        System.out.println("Finished parsing " + list.size() + " dialogues in subtitle file");
         return list;
     }
 

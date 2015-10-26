@@ -13,6 +13,10 @@ public class Dialogue {
         this.endTime = endTime;
         this.dialogueText = dialogueText;
     }
+    
+    public long getMedianTimeSeconds(){
+    	return (this.getEndTime() + this.getStartTime()) / 2000;
+    }
 
     public int getDialogueNumber() {
         return dialogueNumber;
