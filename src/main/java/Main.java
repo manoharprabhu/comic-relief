@@ -15,12 +15,11 @@ import javax.imageio.ImageIO;
  * Created by manoharprabhu on 10/15/2015.
  */
 public class Main {
-	
-	private static final int IMAGE_WIDTH = 640;
-	private static final int IMAGE_HEIGHT = 480;
+
+	private static final int IMAGE_WIDTH = 1024;
+	private static final int IMAGE_HEIGHT = 768;
 	private static final String IMAGE_RES = IMAGE_WIDTH + "x" + IMAGE_HEIGHT;
-	
-	
+	private static final int FONT_SIZE = 21;
 
 	public static void main(String[] args) throws IOException, InterruptedException {
 
@@ -54,12 +53,12 @@ public class Main {
 	private static void addCaptionToPicture(File outputPicture, Dialogue dialogue) throws IOException {
 		BufferedImage image = ImageIO.read(outputPicture);
 		Graphics g = image.getGraphics();
-		g.setFont(new Font("Monospaced", Font.PLAIN, 14));
+		g.setFont(new Font("Monospaced", Font.PLAIN, FONT_SIZE));
 		g.setColor(new Color(0, 0, 0, 190));
 		g.fillRect(0, IMAGE_HEIGHT - 40, IMAGE_WIDTH, 40);
 		g.setColor(Color.white);
-		g.drawString(dialogue.getDialogueText(), (IMAGE_WIDTH/2) - ((dialogue.getDialogueText().length() * 8) / 2),
-				IMAGE_HEIGHT - 15);
+		g.drawString(dialogue.getDialogueText(),
+				(IMAGE_WIDTH / 2) - ((dialogue.getDialogueText().length() * (FONT_SIZE / 2)) / 2), IMAGE_HEIGHT - 15);
 		g.dispose();
 		ImageIO.write(image, "jpg", outputPicture);
 	}
