@@ -15,9 +15,14 @@ import javax.imageio.ImageIO;
  * Created by manoharprabhu on 10/15/2015.
  */
 public class Main {
+	
+	private static final int IMAGE_WIDTH = 640;
+	private static final int IMAGE_HEIGHT = 480;
+	private static final String IMAGE_RES = IMAGE_WIDTH + "x" + IMAGE_HEIGHT;
+	
+	
 
-	public static void main(String[] args) throws IOException,
-			InterruptedException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 
 		String validate = null;
 		Map<String, String> commandMap = buildCommand(args);
@@ -39,25 +44,22 @@ public class Main {
 		for (Dialogue dialogue : list) {
 			prepareCommandForFrame(command, dialogue, commandMap);
 			File outputPicture = getOutputPictureForFrame(commandMap, dialogue);
-			SystemCommandExecutor commandExecutor = new SystemCommandExecutor(
-					command);
+			SystemCommandExecutor commandExecutor = new SystemCommandExecutor(command);
 			commandExecutor.executeCommand();
 			addCaptionToPicture(outputPicture, dialogue);
-			System.out.print("\rProcessed frame "
-					+ dialogue.getDialogueNumber() + " of " + list.size());
+			System.out.print("\rProcessed frame " + dialogue.getDialogueNumber() + " of " + list.size());
 		}
 	}
 
-	private static void addCaptionToPicture(File outputPicture,
-			Dialogue dialogue) throws IOException {
+	private static void addCaptionToPicture(File outputPicture, Dialogue dialogue) throws IOException {
 		BufferedImage image = ImageIO.read(outputPicture);
 		Graphics g = image.getGraphics();
-		g.setFont(g.getFont().deriveFont(16f));
+		g.setFont(new Font("Monospaced", Font.PLAIN, 14));
 		g.setColor(new Color(0, 0, 0, 190));
-		g.fillRect(0, 440, 640, 40);
+		g.fillRect(0, IMAGE_HEIGHT - 40, IMAGE_WIDTH, 40);
 		g.setColor(Color.white);
-		g.setFont(Font.getFont(Font.MONOSPACED));
-		g.drawString(dialogue.getDialogueText(), 10, image.getHeight() - 15);
+		g.drawString(dialogue.getDialogueText(), (IMAGE_WIDTH/2) - ((dialogue.getDialogueText().length() * 8) / 2),
+				IMAGE_HEIGHT - 15);
 		g.dispose();
 		ImageIO.write(image, "jpg", outputPicture);
 	}
@@ -73,29 +75,26 @@ public class Main {
 		command.add("-vframes");
 		command.add("1");
 		command.add("-s");
-		command.add("640x480");
+		command.add(IMAGE_RES);
 		command.add("-q:v");
 		command.add(quality);
 		command.add("OUTPUT_FOLDER_arg[11]");
 		return command;
 	}
 
-	private static File getOutputPictureForFrame(
-			Map<String, String> commandMap, Dialogue dialogue) {
+	private static File getOutputPictureForFrame(Map<String, String> commandMap, Dialogue dialogue) {
 		return new File(getPathToPicture(commandMap, dialogue));
 	}
 
-	private static void prepareCommandForFrame(List<String> command,
-			Dialogue dialogue, Map<String, String> commandMap) {
+	private static void prepareCommandForFrame(List<String> command, Dialogue dialogue,
+			Map<String, String> commandMap) {
 		double time = dialogue.getMedianTimeSeconds();
 		command.set(2, String.valueOf(time));
 		command.set(11, getPathToPicture(commandMap, dialogue));
 	}
 
-	private static String getPathToPicture(Map<String, String> commandMap,
-			Dialogue dialogue) {
-		return commandMap.get("-o") + "\\" + dialogue.getDialogueNumber()
-				+ ".jpg";
+	private static String getPathToPicture(Map<String, String> commandMap, Dialogue dialogue) {
+		return commandMap.get("-o") + "\\" + dialogue.getDialogueNumber() + ".jpg";
 	}
 
 	private static String validateInput(Map<String, String> map) {
@@ -137,8 +136,8 @@ public class Main {
 
 	private static Map<String, String> buildCommand(String[] args) {
 		if (args.length % 2 == 1) {
-			System.out
-					.println("Usage: java -jar comic-relief.jar -s <subtitle_file> -m <movile_file> -o <output_folder>");
+			System.out.println(
+					"Usage: java -jar comic-relief.jar -s <subtitle_file> -m <movile_file> -o <output_folder>");
 			return null;
 		}
 		Map<String, String> map = new HashMap<String, String>();

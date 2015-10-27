@@ -56,6 +56,9 @@ public class SRTParser {
                 }
             }
         }
+        if(lineNumber != 0){
+        	list.add(new Dialogue(lineNumber,startTime,endTime,dialogueText));
+        }
         } catch(Exception e){
         	return null;
         }
