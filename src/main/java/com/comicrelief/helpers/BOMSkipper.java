@@ -1,3 +1,4 @@
+package com.comicrelief.helpers;
 import java.io.IOException;
 import java.io.Reader;
 

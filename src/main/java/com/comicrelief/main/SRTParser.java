@@ -1,6 +1,9 @@
+package com.comicrelief.main;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.comicrelief.helpers.BOMSkipper;
 
 /**
  * Created by manoharprabhu on 10/15/2015.

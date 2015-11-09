@@ -1,3 +1,4 @@
+package com.comicrelief.main;
 import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -10,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 import javax.imageio.ImageIO;
+
+import com.comicrelief.helpers.SystemCommandExecutor;
 
 /**
  * Created by manoharprabhu on 10/15/2015.
@@ -93,7 +96,7 @@ public class Main {
 	}
 
 	private static String getPathToPicture(Map<String, String> commandMap, Dialogue dialogue) {
-		return commandMap.get("-o") + "\\" + dialogue.getDialogueNumber() + ".jpg";
+		return commandMap.get("-o") + File.separator + dialogue.getDialogueNumber() + ".jpg";
 	}
 
 	private static String validateInput(Map<String, String> map) {
