@@ -48,7 +48,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>Main</mainClass>
+							<mainClass>com.comicrelief.main.Main</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
