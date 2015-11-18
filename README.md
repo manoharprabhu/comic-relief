@@ -41,6 +41,14 @@ ComicRelief.generateComics(arguments,new IComicsGenerateUpdate(){
 	}
 });
 ````
+<hr />
+#### Arguements format
+**-s** [Path to subtitle]
 
+**-m** [Path to movie file]
+
+**-o** [Output folder where the comics needs to be generated]
+<hr />
 #### Requirement
 ffmpeg has to be installed and added to the PATH variable
+<hr />
